@@ -9,8 +9,11 @@ import java.util.concurrent.CountDownLatch;
  * @author Jiang Yinzuo
  */
 public class OutOfOrderExecution {
-    private static int x = 0, y = 0;
-    private static int a = 0, b = 0;
+    /**
+     * 不加volatile就会产生重排序
+     */
+    private static volatile int x = 0, y = 0;
+    private static volatile int a = 0, b = 0;
 
     public static void main(String[] args) throws InterruptedException {
         int i = 0;
@@ -50,6 +53,5 @@ public class OutOfOrderExecution {
                 break;
             }
         }
-
     }
 }
