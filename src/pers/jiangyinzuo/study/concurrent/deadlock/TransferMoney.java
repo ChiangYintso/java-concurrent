@@ -10,6 +10,7 @@ public class TransferMoney implements Runnable {
     int flag = 1;
     static Account a = new Account(500);
     static Account b = new Account(500);
+    static final Object lock = new Object();
 
     static class Account {
         int balance = 0;
@@ -29,14 +30,10 @@ public class TransferMoney implements Runnable {
         }
     }
 
-    private void transfer(Account from, Account to, int amount) {
-        synchronized (from) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            synchronized (to) {
+    static void transfer(Account from, Account to, int amount) {
+        class Helper {
+
+            public void transfer() {
                 if (from.balance - amount < 0) {
                     System.out.println("余额不足，转账失败");
                     return;
@@ -46,6 +43,47 @@ public class TransferMoney implements Runnable {
                 System.out.println("成功转账");
             }
         }
+        int fromHash = System.identityHashCode(from);
+        int toHash = System.identityHashCode(to);
+        if (fromHash < toHash) {
+            synchronized (from) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                synchronized (to) {
+                    new Helper().transfer();
+                }
+            }
+        } else if (fromHash > toHash) {
+            synchronized (to) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                synchronized (from) {
+                    new Helper().transfer();
+                }
+            }
+        } else {
+
+            // 哈希值相同需要加时赛
+            synchronized (lock) {
+                synchronized (to) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    synchronized (from) {
+                        new Helper().transfer();
+                    }
+                }
+            }
+        }
+
     }
 
     public static void main(String[] args) throws InterruptedException {
